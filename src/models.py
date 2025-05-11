@@ -1,28 +1,16 @@
-# src/model.py
-
-import pandas as pd
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from joblib import dump
 
-def train_model(df, target_column="charges"):
-    # Prepare data
-    X = df.drop(columns=[target_column])
-    y = df[target_column]
-
-    # Handle categorical variables
-    X = pd.get_dummies(X, drop_first=True)
-
-    # Split data
+def train_model(X, y):
+    # Split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Train model
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    # Create and train the model
+    model = LinearRegression()
     model.fit(X_train, y_train)
 
-    # Save model
-    dump(model, "models/random_forest.pkl")
-    dump(X.columns, "models/features.pkl")
+    # Print training performance (optional)
+    score = model.score(X_test, y_test)
+    print(f"✅ Model R² score on test data: {score:.4f}")
 
-    print("✅ Model trained and saved.")
     return model

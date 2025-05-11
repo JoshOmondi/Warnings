@@ -1,25 +1,29 @@
-# src/data_loader.py
-
 import os
 import zipfile
 import pandas as pd
 
-def extract_zip_if_needed(zip_path, extract_to="data/"):
-    """Extracts CSV from zip if it hasn't been extracted yet."""
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        for file in zip_ref.namelist():
-            if file.endswith('.csv'):
-                extracted_path = os.path.join(extract_to, file)
-                if not os.path.exists(extracted_path):
-                    zip_ref.extract(file, path=extract_to)
-                    print(f"✅ Extracted: {file}")
-                else:
-                    print(f"ℹ️ Already extracted: {file}")
-                return extracted_path
+def extract_zip_if_needed(filepath):
+    import zipfile
+
+    # Step 1: Extract the outer ZIP
+    if zipfile.is_zipfile(filepath):
+        with zipfile.ZipFile(filepath, 'r') as outer_zip:
+            outer_zip.extractall("data/")
+            inner_zip_name = next((f for f in outer_zip.namelist() if f.endswith(".zip")), None)
+            if inner_zip_name:
+                inner_zip_path = os.path.join("data", inner_zip_name)
+
+                # Step 2: Extract the inner ZIP
+                with zipfile.ZipFile(inner_zip_path, 'r') as inner_zip:
+                    inner_zip.extractall("data/")
+                    csv_name = next((f for f in inner_zip.namelist() if f.endswith(".csv")), None)
+                    if csv_name:
+                        return os.path.join("data", csv_name)
+
     raise FileNotFoundError("❌ No CSV file found in the ZIP archive.")
 
+
 def load_data(filepath):
-    """Loads CSV or extracts from zip and loads it."""
-    if filepath.endswith('.zip'):
-        filepath = extract_zip_if_needed(filepath)
-    return pd.read_csv(filepath)
+    extracted_path = extract_zip_if_needed(filepath)
+    # 👇 Add the separator for semicolon-delimited CSVs
+    return pd.read_csv(extracted_path, sep=';')

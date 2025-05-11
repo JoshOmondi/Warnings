@@ -1,30 +1,36 @@
-# main.py
-
 from src.data_loader import load_data
 from src.models import train_model
 from src.evaluate import evaluate_model
-
-import pandas as pd
-from sklearn.model_selection import train_test_split
+import pandas as pd  # ⬅️ Needed for get_dummies
 
 def main():
-    # Load and extract data
-    df = load_data("data/student+performance.zip")  # updated zip path
+    # Load data
+    df = load_data("data/student+performance.zip")
+    
+    # Print columns for verification
+    print("✅ Columns found in dataset:", df.columns.tolist())
 
-    # Preprocessing
-    df = pd.get_dummies(df, drop_first=True)
-    target = "G3"  # You might want to adjust this depending on dataset
+    # Define your target column
+    target = "G3"
 
-    # Train/test split
+    # Check if target column exists
+    if target not in df.columns:
+        print(f"❌ Target column '{target}' not found in dataset.")
+        print("🧠 Tip: Use one of these columns as your target instead:", df.columns.tolist())
+        return
+
+    # Prepare features and labels
     X = df.drop(columns=[target])
     y = df[target]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Convert categorical features to numeric
+    X = pd.get_dummies(X, drop_first=True)
 
     # Train model
-    model = train_model(df, target_column=target)
+    model = train_model(X, y)
 
-    # Evaluate
-    evaluate_model(model, X_test, y_test)
+    # Evaluate model
+    evaluate_model(model, X, y)
 
 if __name__ == "__main__":
     main()
